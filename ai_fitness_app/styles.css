@@ -1,0 +1,415 @@
+/* =========================================================
+   MAIN APP
+========================================================= */
+
+.stApp {
+
+    background:
+        linear-gradient(
+            135deg,
+            #020617,
+            #08112b,
+            #0f172a
+        );
+
+    color: white;
+
+    font-family: 'Segoe UI', sans-serif;
+}
+
+
+/* =========================================================
+   SIDEBAR
+========================================================= */
+
+[data-testid="stSidebar"] {
+
+    background:
+        rgba(5, 10, 30, 0.95);
+
+    border-right:
+        1px solid rgba(255,255,255,0.06);
+}
+
+[data-testid="stSidebar"] * {
+
+    color: white;
+}
+
+
+/* =========================================================
+   HERO SECTION
+========================================================= */
+
+.hero-section {
+
+    padding: 45px;
+
+    border-radius: 35px;
+
+    background:
+        linear-gradient(
+            135deg,
+            rgba(6,182,212,0.15),
+            rgba(59,130,246,0.08)
+        );
+
+    border:
+        1px solid rgba(255,255,255,0.08);
+
+    backdrop-filter: blur(20px);
+
+    margin-bottom: 35px;
+
+    box-shadow:
+        0 0 40px rgba(6,182,212,0.15);
+}
+
+
+/* HERO TITLE */
+
+.hero-title {
+
+    font-size: 4.2rem;
+
+    font-weight: 800;
+
+    color: white;
+
+    margin-bottom: 10px;
+
+    text-shadow:
+        0 0 20px rgba(6,182,212,0.35);
+}
+
+
+/* HERO SUBTITLE */
+
+.hero-subtitle {
+
+    font-size: 1.2rem;
+
+    color: #cbd5e1;
+
+    letter-spacing: 0.5px;
+}
+
+
+/* =========================================================
+   METRIC CARDS
+========================================================= */
+
+.metric-card {
+
+    padding: 28px;
+
+    border-radius: 28px;
+
+    background:
+        rgba(255,255,255,0.05);
+
+    backdrop-filter: blur(15px);
+
+    border:
+        1px solid rgba(255,255,255,0.08);
+
+    text-align: center;
+
+    transition: 0.35s ease;
+
+    margin-bottom: 20px;
+
+    box-shadow:
+        0 4px 20px rgba(0,0,0,0.25);
+}
+
+
+/* HOVER EFFECT */
+
+.metric-card:hover {
+
+    transform:
+        translateY(-10px);
+
+    box-shadow:
+        0 0 30px rgba(6,182,212,0.28);
+}
+
+
+/* METRIC TITLE */
+
+.metric-card h3 {
+
+    color: #cbd5e1;
+
+    font-size: 1.1rem;
+
+    margin-bottom: 15px;
+}
+
+
+/* METRIC VALUE */
+
+.metric-card h1 {
+
+    color: #67e8f9;
+
+    font-size: 2.7rem;
+
+    font-weight: 700;
+}
+
+
+/* =========================================================
+   AI ORB
+========================================================= */
+
+.ai-orb-container {
+
+    display: flex;
+
+    flex-direction: column;
+
+    align-items: center;
+
+    justify-content: center;
+
+    margin-top: 60px;
+
+    margin-bottom: 60px;
+}
+
+
+/* GLOWING ORB */
+
+.ai-orb {
+
+    width: 150px;
+
+    height: 150px;
+
+    border-radius: 50%;
+
+    background:
+        radial-gradient(
+            circle,
+            #22d3ee,
+            #0f172a
+        );
+
+    box-shadow:
+        0 0 60px #06b6d4,
+        0 0 120px rgba(6,182,212,0.4);
+
+    animation:
+        pulse 2.2s infinite ease-in-out;
+}
+
+
+/* PULSE */
+
+@keyframes pulse {
+
+    0% {
+
+        transform: scale(1);
+
+        opacity: 0.9;
+    }
+
+    50% {
+
+        transform: scale(1.08);
+
+        opacity: 1;
+    }
+
+    100% {
+
+        transform: scale(1);
+
+        opacity: 0.9;
+    }
+}
+
+
+/* ORB TEXT */
+
+.orb-text {
+
+    margin-top: 25px;
+
+    color: #67e8f9;
+
+    font-size: 1.2rem;
+
+    letter-spacing: 2px;
+
+    text-transform: uppercase;
+}
+
+
+/* =========================================================
+   BUTTONS
+========================================================= */
+
+.stButton > button {
+
+    border-radius: 15px;
+
+    background:
+        linear-gradient(
+            90deg,
+            #06b6d4,
+            #3b82f6
+        );
+
+    color: white;
+
+    border: none;
+
+    padding: 0.75rem 1rem;
+
+    font-weight: 600;
+
+    transition: 0.3s ease;
+
+    width: 100%;
+}
+
+
+/* BUTTON HOVER */
+
+.stButton > button:hover {
+
+    transform: scale(1.03);
+
+    box-shadow:
+        0 0 20px rgba(6,182,212,0.45);
+}
+
+
+/* =========================================================
+   INPUT FIELDS
+========================================================= */
+
+.stTextInput input,
+.stNumberInput input {
+
+    border-radius: 15px;
+
+    background:
+        rgba(255,255,255,0.05);
+
+    color: white;
+
+    border:
+        1px solid rgba(255,255,255,0.08);
+}
+
+
+/* =========================================================
+   CHAT MESSAGES
+========================================================= */
+
+[data-testid="stChatMessage"] {
+
+    background:
+        rgba(255,255,255,0.04);
+
+    border-radius: 22px;
+
+    padding: 18px;
+
+    border:
+        1px solid rgba(255,255,255,0.06);
+
+    margin-bottom: 12px;
+
+    backdrop-filter: blur(12px);
+}
+
+
+/* =========================================================
+   PLOTLY CHARTS
+========================================================= */
+
+.js-plotly-plot {
+
+    border-radius: 25px;
+
+    overflow: hidden;
+}
+
+
+/* =========================================================
+   SCROLLBAR
+========================================================= */
+
+::-webkit-scrollbar {
+
+    width: 10px;
+}
+
+::-webkit-scrollbar-track {
+
+    background: #0f172a;
+}
+
+::-webkit-scrollbar-thumb {
+
+    background: #06b6d4;
+
+    border-radius: 20px;
+}
+
+
+/* =========================================================
+   INFO BOXES
+========================================================= */
+
+.stAlert {
+
+    border-radius: 20px;
+}
+
+
+/* =========================================================
+   RADIO BUTTONS
+========================================================= */
+
+.stRadio > div {
+
+    gap: 12px;
+}
+
+
+/* =========================================================
+   ANIMATIONS
+========================================================= */
+
+.metric-card,
+.hero-section,
+.ai-orb {
+
+    animation:
+        fadeIn 0.6s ease;
+}
+
+
+@keyframes fadeIn {
+
+    from {
+
+        opacity: 0;
+
+        transform: translateY(10px);
+    }
+
+    to {
+
+        opacity: 1;
+
+        transform: translateY(0);
+    }
+}
