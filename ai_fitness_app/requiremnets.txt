@@ -1,0 +1,12 @@
+streamlit
+pandas
+plotly
+opencv-python
+mediapipe
+numpy
+groq
+gtts
+edge-tts
+streamlit-lottie
+speechrecognition
+pillow
