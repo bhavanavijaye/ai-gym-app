@@ -95,7 +95,7 @@ with col_counter:
 
     c1, c2 = st.columns(2)
     with c1:
-        start_cam = st.button("▶ Start", type="primary", use_container_width=True)
+        pass
     with c2:
         if st.button("🔄 Reset", use_container_width=True):
             st.session_state.rep_count = 0
@@ -107,84 +107,78 @@ with col_counter:
 with col_cam:
     FRAME_WINDOW = st.empty()
 
-    if start_cam:
-        mp_pose = mp.solutions.pose
-        mp_draw = mp.solutions.drawing_utils
+    img_file = st.camera_input("📸 Point camera at yourself", key="cam_feed")
 
+    if img_file is not None:
+        # Decode the captured frame
+        file_bytes = np.asarray(bytearray(img_file.read()), dtype=np.uint8)
+        frame = cv2.imdecode(file_bytes, cv2.IMREAD_COLOR)
+        frame = cv2.flip(frame, 1)
+
+        mp_pose_local = mp.solutions.pose
+        mp_draw = mp.solutions.drawing_utils
         config = EXERCISE_ANGLES[cam_exercise]
         j1, j2, j3 = config["joints"]
         down_thresh = config["down"]
         up_thresh   = config["up"]
 
-        cap = cv2.VideoCapture(0)
-        stop_btn = st.button("⏹ Stop Camera", key="stop_cam")
+        rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
 
-        with mp_pose.Pose(min_detection_confidence=0.6,
-                          min_tracking_confidence=0.6) as pose:
-            while cap.isOpened() and not stop_btn:
-                ret, frame = cap.read()
-                if not ret:
-                    st.warning("Camera not accessible.")
-                    break
+        with mp_pose_local.Pose(min_detection_confidence=0.6,
+                                min_tracking_confidence=0.6) as pose:
+            result = pose.process(rgb)
 
-                frame = cv2.flip(frame, 1)
-                rgb   = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-                result = pose.process(rgb)
+            if result.pose_landmarks:
+                lm = result.pose_landmarks.landmark
 
-                if result.pose_landmarks:
-                    lm = result.pose_landmarks.landmark
+                def get_coord(name):
+                    idx = LANDMARK_MAP[name][0].value
+                    l = lm[idx]
+                    return [l.x, l.y]
 
-                    # Get landmark coords (use LEFT side)
-                    def get_coord(name):
-                        idx = LANDMARK_MAP[name][0].value
-                        l = lm[idx]
-                        return [l.x, l.y]
+                try:
+                    a = get_coord(j1)
+                    b = get_coord(j2)
+                    c_pt = get_coord(j3)
+                    angle = calculate_angle(a, b, c_pt)
 
-                    try:
-                        a = get_coord(j1)
-                        b = get_coord(j2)
-                        c = get_coord(j3)
-                        angle = calculate_angle(a, b, c)
+                    # Rep logic
+                    if angle > down_thresh:
+                        st.session_state.rep_stage = "down"
+                    if angle < up_thresh and st.session_state.rep_stage == "down":
+                        st.session_state.rep_stage = "up"
+                        st.session_state.rep_count += 1
 
-                        # Rep logic
-                        if angle > down_thresh:
-                            st.session_state.rep_stage = "down"
-                        if angle < up_thresh and st.session_state.rep_stage == "down":
-                            st.session_state.rep_stage = "up"
-                            st.session_state.rep_count += 1
+                    # Draw angle on frame
+                    h, w = frame.shape[:2]
+                    bx, by = int(b[0]*w), int(b[1]*h)
+                    cv2.putText(frame, f"{int(angle)}°",
+                        (bx-30, by-15),
+                        cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0,255,255), 2)
 
-                        # Draw on frame
-                        h, w = frame.shape[:2]
-                        bx, by = int(b[0]*w), int(b[1]*h)
-                        cv2.putText(frame, f"{int(angle)}°",
-                            (bx-30, by-15),
-                            cv2.FONT_HERSHEY_SIMPLEX, 0.7,
-                            (0,255,255), 2)
+                    # HUD overlay
+                    cv2.rectangle(frame, (0,0), (220,80), (0,0,0), -1)
+                    cv2.putText(frame, f"Reps: {st.session_state.rep_count}",
+                        (10,30), cv2.FONT_HERSHEY_SIMPLEX, 0.9, (0,255,0), 2)
+                    cv2.putText(frame, f"Stage: {st.session_state.rep_stage or '-'}",
+                        (10,60), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255,255,0), 2)
 
-                        # HUD overlay
-                        cv2.rectangle(frame, (0,0), (220,80), (0,0,0), -1)
-                        cv2.putText(frame, f"Reps: {st.session_state.rep_count}",
-                            (10,30), cv2.FONT_HERSHEY_SIMPLEX, 0.9, (0,255,0), 2)
-                        cv2.putText(frame, f"Stage: {st.session_state.rep_stage or '-'}",
-                            (10,60), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255,255,0), 2)
+                    rep_display.metric("Reps", st.session_state.rep_count)
+                    angle_display.metric("Joint Angle", f"{int(angle)}°")
+                    stage_display.caption(f"Stage: {st.session_state.rep_stage or '-'}")
 
-                        rep_display.metric("Reps", st.session_state.rep_count)
-                        angle_display.metric("Joint Angle", f"{int(angle)}°")
-                        stage_display.caption(f"Stage: {st.session_state.rep_stage or '-'}")
+                except Exception:
+                    pass
 
-                    except Exception:
-                        pass
+                mp_draw.draw_landmarks(
+                    frame, result.pose_landmarks,
+                    mp_pose_local.POSE_CONNECTIONS,
+                    mp_draw.DrawingSpec(color=(0,255,0), thickness=2, circle_radius=3),
+                    mp_draw.DrawingSpec(color=(0,100,255), thickness=2),
+                )
 
-                    mp_draw.draw_landmarks(
-                        frame, result.pose_landmarks,
-                        mp_pose.POSE_CONNECTIONS,
-                        mp_draw.DrawingSpec(color=(0,255,0), thickness=2, circle_radius=3),
-                        mp_draw.DrawingSpec(color=(0,100,255), thickness=2),
-                    )
-
-                FRAME_WINDOW.image(cv2.cvtColor(frame, cv2.COLOR_BGR2RGB),
-                                   channels="RGB", use_container_width=True)
-
+        FRAME_WINDOW.image(cv2.cvtColor(frame, cv2.COLOR_BGR2RGB),
+                           channels="RGB", use_container_width=True)
         cap.release()
 
 st.divider()
