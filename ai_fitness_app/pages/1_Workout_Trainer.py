@@ -25,13 +25,7 @@ st.set_page_config(page_title="Workout Trainer", page_icon="🏋️", layout="wi
 st.title("🏋️ AI Workout Trainer")
 st.markdown("Real-time pose detection, rep counting, and **form scoring** across 8 exercises")
 
-if not MEDIAPIPE_OK:
-    st.error("""
-    ❌ MediaPipe not working. Fix:
-    ```
-    pip uninstall mediapipe -y && pip install mediapipe==0.10.14
-    ```
-    """)
+
 
 # ── Session state ──────────────────────────────────────────────────────────────
 if "rep_state" not in st.session_state:
