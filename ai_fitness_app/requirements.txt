@@ -10,3 +10,4 @@ edge-tts
 streamlit-lottie
 speechrecognition
 pillow
+bcrypt
