@@ -111,12 +111,14 @@ with tab_gym:
                     """
 
                     try:
-
-                        r = requests.post(
-                            "https://overpass-api.de/api/interpreter",
-                            data=query,
-                            timeout=30
-                        )
+                      r = requests.post(
+                          "https://overpass.kumi.systems/api/interpreter",
+                           data=query,
+                           timeout=60,
+                           headers={
+                            "User-Agent": "Mozilla/5.0"
+                           }
+                      )
 
                         if r.status_code != 200:
                             st.error("Gym API failed.")
