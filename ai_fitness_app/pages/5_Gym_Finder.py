@@ -1,26 +1,30 @@
-import streamlit as st  # pyright: ignore[reportMissingImports]
+import streamlit as st
 import requests
 import pandas as pd
 import plotly.express as px
 from groq import Groq
 import os
 from dotenv import load_dotenv
+
 from utils.db import (
     save_workout_program,
     get_saved_programs,
     get_program_by_id
 )
+
 from utils.sidebar import show_sidebar
 
-# ─────────────────────────────────────────────────────────────
+# ============================================================
 # LOGIN CHECK
-# ─────────────────────────────────────────────────────────────
+# ============================================================
+
 if "logged_in" not in st.session_state:
     st.switch_page("pages/0_Login.py")
 
-# ─────────────────────────────────────────────────────────────
+# ============================================================
 # CONFIG
-# ─────────────────────────────────────────────────────────────
+# ============================================================
+
 load_dotenv()
 
 st.set_page_config(
@@ -44,9 +48,14 @@ tab_gym, tab_prog, tab_saved = st.tabs([
 # ============================================================
 # TAB 1 — GYM FINDER
 # ============================================================
+
 with tab_gym:
 
     col1, col2 = st.columns([1, 1])
+
+    # ========================================================
+    # LEFT SIDE
+    # ========================================================
 
     with col1:
 
@@ -93,6 +102,7 @@ with tab_gym:
         ):
 
             if not city.strip():
+
                 st.warning("Please enter a city name")
 
             else:
@@ -101,7 +111,7 @@ with tab_gym:
 
                     query = f"""
                     [out:json];
-                    area[name="{city}"]->.searchArea;
+                    area["name"="{city}"]->.searchArea;
                     (
                       node["leisure"="fitness_centre"](area.searchArea);
                       node["sport"="gym"](area.searchArea);
@@ -111,14 +121,15 @@ with tab_gym:
                     """
 
                     try:
-                      r = requests.post(
-                          "https://overpass.kumi.systems/api/interpreter",
-                           data=query,
-                           timeout=60,
-                           headers={
-                            "User-Agent": "Mozilla/5.0"
-                           }
-                      )
+
+                        r = requests.post(
+                            "https://overpass.kumi.systems/api/interpreter",
+                            data=query,
+                            timeout=60,
+                            headers={
+                                "User-Agent": "Mozilla/5.0"
+                            }
+                        )
 
                         if r.status_code != 200:
                             st.error("Gym API failed.")
@@ -130,10 +141,11 @@ with tab_gym:
 
                             tags = el.get("tags", {})
 
-                            name = tags.get("name", "Unknown Gym")
-
                             gyms.append({
-                                "Name": name,
+                                "Name": tags.get(
+                                    "name",
+                                    "Unknown Gym"
+                                ),
                                 "Type": tags.get(
                                     "sport",
                                     tags.get("leisure", "Gym")
@@ -202,19 +214,23 @@ with tab_gym:
                                 )
 
                         else:
+
                             st.warning(
                                 f"No gyms found in {city}"
                             )
 
                     except requests.exceptions.Timeout:
+
                         st.error("Request timed out")
 
                     except Exception as e:
+
                         st.error(f"Search failed: {e}")
 
     # ========================================================
     # RIGHT SIDE
     # ========================================================
+
     with col2:
 
         st.subheader("📊 Gym Type Distribution")
@@ -227,7 +243,10 @@ with tab_gym:
                 .reset_index()
             )
 
-            type_counts.columns = ["Type", "Count"]
+            type_counts.columns = [
+                "Type",
+                "Count"
+            ]
 
             fig_pie = px.pie(
                 type_counts,
@@ -241,7 +260,10 @@ with tab_gym:
             )
 
         else:
-            st.info("Search gyms to see analytics")
+
+            st.info(
+                "Search gyms to see analytics"
+            )
 
         st.divider()
 
@@ -269,6 +291,7 @@ with tab_gym:
 # ============================================================
 # TAB 2 — AI PROGRAM BUILDER
 # ============================================================
+
 with tab_prog:
 
     st.subheader("🤖 AI Workout Program Builder")
@@ -308,6 +331,7 @@ with tab_prog:
         api_key = os.getenv("GROQ_API_KEY")
 
         if not api_key:
+
             st.error("GROQ_API_KEY missing")
 
         else:
@@ -360,11 +384,13 @@ Include:
                     st.success("Program Saved")
 
             except Exception as e:
+
                 st.error(f"AI Error: {e}")
 
 # ============================================================
 # TAB 3 — SAVED PROGRAMS
 # ============================================================
+
 with tab_saved:
 
     st.subheader("💾 Saved Programs")
@@ -383,7 +409,9 @@ with tab_saved:
                 f"{row['name']} — {row['level']}"
             ):
 
-                prog = get_program_by_id(row["id"])
+                prog = get_program_by_id(
+                    row["id"]
+                )
 
                 if prog:
 
