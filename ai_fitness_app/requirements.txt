@@ -14,3 +14,4 @@ joblib
 scipy
 opencv-python-headless
 streamlit-lottie
+gtts
