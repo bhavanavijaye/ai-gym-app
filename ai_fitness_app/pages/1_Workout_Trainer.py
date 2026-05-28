@@ -154,7 +154,7 @@ with col1:
 
     if run:
         if not MEDIAPIPE_OK:
-            st.error("Fix MediaPipe first")
+            st.info("Webcam workout detection works best on local desktop version.")
         else:
             cap = cv2.VideoCapture(0)
             if not cap.isOpened():
