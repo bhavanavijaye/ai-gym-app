@@ -4,6 +4,58 @@ import cv2
 import mediapipe as mp
 import numpy as np
 
+# ── LANDMARK MAP ──────────────────────────────────────────────
+mp_pose = mp.solutions.pose
+PoseLandmark = mp_pose.PoseLandmark
+
+LANDMARK_MAP = {
+    "LEFT_SHOULDER":  [PoseLandmark.LEFT_SHOULDER],
+    "LEFT_ELBOW":     [PoseLandmark.LEFT_ELBOW],
+    "LEFT_WRIST":     [PoseLandmark.LEFT_WRIST],
+    "LEFT_HIP":       [PoseLandmark.LEFT_HIP],
+    "LEFT_KNEE":      [PoseLandmark.LEFT_KNEE],
+    "LEFT_ANKLE":     [PoseLandmark.LEFT_ANKLE],
+}
+
+# ── ANGLE CALCULATOR ──────────────────────────────────────────
+def calculate_angle(a, b, c):
+    """Calculate angle at point b given three [x,y] points."""
+    a, b, c = np.array(a), np.array(b), np.array(c)
+    radians = np.arctan2(c[1]-b[1], c[0]-b[0]) - np.arctan2(a[1]-b[1], a[0]-b[0])
+    angle = np.abs(np.degrees(radians))
+    return 360 - angle if angle > 180 else angle
+
+# ── EXERCISE CONFIG ───────────────────────────────────────────
+# joints: [proximal, vertex, distal]  (angle is measured at vertex)
+# down_thresh: angle ABOVE this → "down" stage
+# up_thresh:   angle BELOW this → rep completed
+EXERCISE_ANGLES = {
+    "Bicep Curl": {
+        "joints": ["LEFT_SHOULDER", "LEFT_ELBOW", "LEFT_WRIST"],
+        "down": 160,
+        "up":   40,
+    },
+    "Squat": {
+        "joints": ["LEFT_HIP", "LEFT_KNEE", "LEFT_ANKLE"],
+        "down": 160,
+        "up":   90,
+    },
+    "Shoulder Press": {
+        "joints": ["LEFT_ELBOW", "LEFT_SHOULDER", "LEFT_HIP"],
+        "down": 60,
+        "up":   160,
+    },
+    "Lunge": {
+        "joints": ["LEFT_HIP", "LEFT_KNEE", "LEFT_ANKLE"],
+        "down": 160,
+        "up":   100,
+    },
+    "Lateral Raise": {
+        "joints": ["LEFT_HIP", "LEFT_SHOULDER", "LEFT_ELBOW"],
+        "down": 30,
+        "up":   80,
+    },
+}
 # ── CSS ───────────────────────────────────────────────────────
 _css = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "styles.css")
 try:
