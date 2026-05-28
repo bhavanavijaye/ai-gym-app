@@ -14,4 +14,4 @@ joblib
 scipy
 opencv-python-headless
 streamlit-lottie
-gTTS
+gtts==2.5.1
