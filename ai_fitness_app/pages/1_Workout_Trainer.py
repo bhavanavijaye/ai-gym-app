@@ -1,6 +1,7 @@
 import streamlit as st # pyright: ignore[reportMissingImports]
 import cv2 # pyright: ignore[reportMissingImports]
 import time
+from streamlit_webrtc import webrtc_streamer
 from utils.sidebar import show_sidebar
 from utils.voice import autoplay_audio
 if "user_email" not in st.session_state:
@@ -151,34 +152,15 @@ with col1:
     run = st.toggle("▶ Start Webcam", value=False)
     frame_placeholder = st.empty()
     feedback_placeholder = st.empty()
-
     if run:
-        if not MEDIAPIPE_OK:
-            st.info("Webcam workout detection works best on local desktop version.")
-        else:
-            cap = cv2.VideoCapture(0)
-            if not cap.isOpened():
-                st.error("❌ Cannot open webcam. Check camera.")
-            else:
-                st.info("Webcam running — toggle off to stop")
-                while run:
-                    ret, frame = cap.read()
-                    if not ret:
-                        st.warning("Frame read failed")
-                        break
-                    processed, count, stage, feedback, form_score = process_frame(
-                        frame, exercise, st.session_state.rep_state
-                    )
-                    st.session_state.rep_state["count"] = count
-                    st.session_state.rep_state["stage"] = stage
+        st.subheader("📷 Live Camera")
+        camera = st.camera_input("Open Camera")
+    if camera:
+        st.success("✅ Camera working!")
 
-                    frame_rgb = cv2.cvtColor(processed, cv2.COLOR_BGR2RGB)
-                    frame_placeholder.image(frame_rgb, channels="RGB", use_container_width=True)
-                    feedback_placeholder.info(f"**Feedback:** {feedback}")
-
-                    if not st.session_state.get("_run_webcam", True):
-                        break
-                cap.release()
+        feedback_placeholder.info(
+            "Camera connected successfully in browser."
+        )
     else:
         frame_placeholder.image(
             "https://placehold.co/700x480/0d1117/1D9E75?text=Toggle+Start+Webcam",
