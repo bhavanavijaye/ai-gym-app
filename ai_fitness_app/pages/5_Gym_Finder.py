@@ -54,11 +54,26 @@ with tab_gym:
                     out body 20;
                     """
                     try:
-                        r = requests.post(
-                            "https://overpass-api.de/api/interpreter",
-                            data=query, timeout=25
-                        )
-                        data = r.json()
+r = requests.post(
+    "https://overpass-api.de/api/interpreter",
+    data=query,
+    timeout=25
+)
+
+if r.status_code != 200:
+    st.error("Gym API failed. Try again later.")
+    st.stop()
+
+if not r.text.strip():
+    st.error("No response from gym server.")
+    st.stop()
+
+try:
+    data = r.json()
+except Exception:
+    st.error("Invalid response from gym API.")
+    st.text(r.text[:300])
+    st.stop()
                         gyms = []
                         for el in data.get("elements", []):
                             tags = el.get("tags", {})
