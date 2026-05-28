@@ -12,8 +12,10 @@ xgboost
 lightgbm
 joblib
 scipy
-opencv-python-headless
 streamlit-lottie
 gtts==2.5.1
+mediapipe==0.10.14
+opencv-python-headless==4.8.1.78
 streamlit-webrtc>=0.47.0
 av>=10.0.0
+
