@@ -152,15 +152,27 @@ with col1:
     run = st.toggle("▶ Start Webcam", value=False)
     frame_placeholder = st.empty()
     feedback_placeholder = st.empty()
-    if run:
-        st.subheader("📷 Live Camera")
-        camera = st.camera_input("Open Camera")
-    if camera:
-        st.success("✅ Camera working!")
+from streamlit_webrtc import webrtc_streamer, VideoTransformerBase
+import av
 
-        feedback_placeholder.info(
-            "Camera connected successfully in browser."
+class PoseTransformer(VideoTransformerBase):
+    def transform(self, frame):
+        img = frame.to_ndarray(format="bgr24")
+
+        processed, count, stage, feedback, form_score = process_frame(
+            img, exercise, st.session_state.rep_state
         )
+
+        st.session_state.rep_state["count"] = count
+        st.session_state.rep_state["stage"] = stage
+
+        return av.VideoFrame.from_ndarray(processed, format="bgr24")
+
+if run:
+    webrtc_streamer(
+        key="workout",
+        video_transformer_factory=PoseTransformer
+    )
     else:
         frame_placeholder.image(
             "https://placehold.co/700x480/0d1117/1D9E75?text=Toggle+Start+Webcam",
