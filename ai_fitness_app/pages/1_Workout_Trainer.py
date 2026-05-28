@@ -1,5 +1,8 @@
 import os, streamlit as st, pandas as pd, plotly.express as px, plotly.graph_objects as go
 from utils.db import log_workout, get_workout_history, get_personal_records
+import cv2
+import mediapipe as mp
+import numpy as np
 
 # ── CSS ───────────────────────────────────────────────────────
 _css = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "styles.css")
@@ -17,6 +20,122 @@ st.markdown("""
 </div>""", unsafe_allow_html=True)
 
 # ── Note about webcam ─────────────────────────────────────────
+# ── CAMERA REP COUNTER ────────────────────────────────────────
+st.subheader("📷 Live Rep Counter")
+
+cam_exercise = st.selectbox("Select exercise for rep counting", 
+    list(EXERCISE_ANGLES.keys()), key="cam_ex")
+
+col_cam, col_counter = st.columns([2, 1])
+
+with col_counter:
+    st.markdown("### 🔢 Rep Counter")
+    if "rep_count" not in st.session_state:
+        st.session_state.rep_count = 0
+    if "rep_stage" not in st.session_state:
+        st.session_state.rep_stage = None
+
+    rep_display = st.empty()
+    angle_display = st.empty()
+    stage_display = st.empty()
+
+    rep_display.metric("Reps", st.session_state.rep_count)
+
+    c1, c2 = st.columns(2)
+    with c1:
+        start_cam = st.button("▶ Start", type="primary", use_container_width=True)
+    with c2:
+        if st.button("🔄 Reset", use_container_width=True):
+            st.session_state.rep_count = 0
+            st.session_state.rep_stage = None
+            st.rerun()
+
+    st.info(f"**{cam_exercise}**\nPosition yourself so your full body is visible.")
+
+with col_cam:
+    FRAME_WINDOW = st.empty()
+
+    if start_cam:
+        mp_pose = mp.solutions.pose
+        mp_draw = mp.solutions.drawing_utils
+
+        config = EXERCISE_ANGLES[cam_exercise]
+        j1, j2, j3 = config["joints"]
+        down_thresh = config["down"]
+        up_thresh   = config["up"]
+
+        cap = cv2.VideoCapture(0)
+        stop_btn = st.button("⏹ Stop Camera", key="stop_cam")
+
+        with mp_pose.Pose(min_detection_confidence=0.6,
+                          min_tracking_confidence=0.6) as pose:
+            while cap.isOpened() and not stop_btn:
+                ret, frame = cap.read()
+                if not ret:
+                    st.warning("Camera not accessible.")
+                    break
+
+                frame = cv2.flip(frame, 1)
+                rgb   = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+                result = pose.process(rgb)
+
+                if result.pose_landmarks:
+                    lm = result.pose_landmarks.landmark
+
+                    # Get landmark coords (use LEFT side)
+                    def get_coord(name):
+                        idx = LANDMARK_MAP[name][0].value
+                        l = lm[idx]
+                        return [l.x, l.y]
+
+                    try:
+                        a = get_coord(j1)
+                        b = get_coord(j2)
+                        c = get_coord(j3)
+                        angle = calculate_angle(a, b, c)
+
+                        # Rep logic
+                        if angle > down_thresh:
+                            st.session_state.rep_stage = "down"
+                        if angle < up_thresh and st.session_state.rep_stage == "down":
+                            st.session_state.rep_stage = "up"
+                            st.session_state.rep_count += 1
+
+                        # Draw on frame
+                        h, w = frame.shape[:2]
+                        bx, by = int(b[0]*w), int(b[1]*h)
+                        cv2.putText(frame, f"{int(angle)}°",
+                            (bx-30, by-15),
+                            cv2.FONT_HERSHEY_SIMPLEX, 0.7,
+                            (0,255,255), 2)
+
+                        # HUD overlay
+                        cv2.rectangle(frame, (0,0), (220,80), (0,0,0), -1)
+                        cv2.putText(frame, f"Reps: {st.session_state.rep_count}",
+                            (10,30), cv2.FONT_HERSHEY_SIMPLEX, 0.9, (0,255,0), 2)
+                        cv2.putText(frame, f"Stage: {st.session_state.rep_stage or '-'}",
+                            (10,60), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255,255,0), 2)
+
+                        rep_display.metric("Reps", st.session_state.rep_count)
+                        angle_display.metric("Joint Angle", f"{int(angle)}°")
+                        stage_display.caption(f"Stage: {st.session_state.rep_stage or '-'}")
+
+                    except Exception:
+                        pass
+
+                    mp_draw.draw_landmarks(
+                        frame, result.pose_landmarks,
+                        mp_pose.POSE_CONNECTIONS,
+                        mp_draw.DrawingSpec(color=(0,255,0), thickness=2, circle_radius=3),
+                        mp_draw.DrawingSpec(color=(0,100,255), thickness=2),
+                    )
+
+                FRAME_WINDOW.image(cv2.cvtColor(frame, cv2.COLOR_BGR2RGB),
+                                   channels="RGB", use_container_width=True)
+
+        cap.release()
+
+st.divider()
 st.info("📱 **Pose detection** works best in the desktop app. Here you can log workouts manually and track all your progress.")
 
 EXERCISES = [
@@ -39,7 +158,30 @@ MUSCLE_MAP = {
     "Russian Twist":"Core","Battle Rope":"Full Body","Kettlebell Swing":"Full Body",
     "Dips":"Chest","Chin Up":"Back","Sprint":"Cardio","Running":"Cardio","Cycling":"Cardio",
 }
+def calculate_angle(a, b, c):
+    a, b, c = np.array(a), np.array(b), np.array(c)
+    radians = np.arctan2(c[1]-b[1], c[0]-b[0]) - np.arctan2(a[1]-b[1], a[0]-b[0])
+    angle = np.abs(radians * 180.0 / np.pi)
+    return 360 - angle if angle > 180 else angle
 
+EXERCISE_ANGLES = {
+    "Bicep Curl":       {"joints": ("shoulder","elbow","wrist"),  "down": 160, "up": 40},
+    "Push Up":          {"joints": ("shoulder","elbow","wrist"),  "down": 160, "up": 90},
+    "Barbell Squat":    {"joints": ("hip","knee","ankle"),        "down": 90,  "up": 160},
+    "Lunges":           {"joints": ("hip","knee","ankle"),        "down": 90,  "up": 160},
+    "Shoulder Press":   {"joints": ("elbow","shoulder","hip"),    "down": 90,  "up": 160},
+    "Hammer Curl":      {"joints": ("shoulder","elbow","wrist"),  "down": 160, "up": 40},
+    "Tricep Dip":       {"joints": ("shoulder","elbow","wrist"),  "down": 90,  "up": 160},
+}
+
+LANDMARK_MAP = {
+    "shoulder": (mp.solutions.pose.PoseLandmark.LEFT_SHOULDER,  mp.solutions.pose.PoseLandmark.RIGHT_SHOULDER),
+    "elbow":    (mp.solutions.pose.PoseLandmark.LEFT_ELBOW,     mp.solutions.pose.PoseLandmark.RIGHT_ELBOW),
+    "wrist":    (mp.solutions.pose.PoseLandmark.LEFT_WRIST,     mp.solutions.pose.PoseLandmark.RIGHT_WRIST),
+    "hip":      (mp.solutions.pose.PoseLandmark.LEFT_HIP,       mp.solutions.pose.PoseLandmark.RIGHT_HIP),
+    "knee":     (mp.solutions.pose.PoseLandmark.LEFT_KNEE,      mp.solutions.pose.PoseLandmark.RIGHT_KNEE),
+    "ankle":    (mp.solutions.pose.PoseLandmark.LEFT_ANKLE,     mp.solutions.pose.PoseLandmark.RIGHT_ANKLE),
+}
 col_log, col_stats = st.columns([1, 1.5])
 
 # ── LOG WORKOUT ───────────────────────────────────────────────
