@@ -55,14 +55,10 @@ def voice_available():
         return True
     except (OSError, ImportError):
         return False
+
 VOICE_OK = voice_available()
 
-
-if VOICE_OK:
-    # show voice input button
-else:
-    st.info("🎙️ Voice input unavailable in cloud environment.")
-GROQ_MODEL = "llama-3.1-8b-instant"
+GROQ_MODEL = "llama-3.1-8b-instant"   # ← goes straight here, no if/else block
 user_context = get_user_context()
 
 SYSTEM_PROMPT = f"""You are FitBot, an expert AI personal trainer and nutritionist with 10+ years of experience.
