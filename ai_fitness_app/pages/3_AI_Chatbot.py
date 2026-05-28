@@ -48,15 +48,20 @@ def load_lottie(url: str):
         return {}
 
 # ── Check voice dependencies once ─────────────────────────────────────────────
-@st.cache_data
-def voice_available() -> bool:
+@st.cache_resource
+def voice_available():
     try:
-        import sounddevice, faster_whisper  # pyright: ignore[reportMissingImports] # noqa: F401
+        import sounddevice, faster_whisper
         return True
-    except ImportError:
+    except (OSError, ImportError):
         return False
-
 VOICE_OK = voice_available()
+
+
+if VOICE_OK:
+    # show voice input button
+else:
+    st.info("🎙️ Voice input unavailable in cloud environment.")
 GROQ_MODEL = "llama-3.1-8b-instant"
 user_context = get_user_context()
 
