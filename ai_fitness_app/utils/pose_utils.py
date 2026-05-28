@@ -1,6 +1,6 @@
 import cv2 # pyright: ignore[reportMissingImports]
 import numpy as np # pyright: ignore[reportMissingImports]
-
+from utils.pose_utils import EXERCISE_ANGLES, LANDMARK_MAP, calculate_angle
 # Safe mediapipe import — handles both old and new versions
 try:
     import mediapipe as mp # pyright: ignore[reportMissingImports]
